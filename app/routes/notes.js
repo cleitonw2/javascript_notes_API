@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Note = require('../models/note.js');
 const withAuth = require('../middlewares/auth');
+const { route } = require('./users.js');
 
 router.post('/', withAuth, async (req, res) => {
     const { title, body } = req.body;
@@ -25,6 +26,15 @@ router.get('/:id', withAuth, async (req, res) => {
             res.status(403).json({ error: 'Permission denied' });
     } catch (error) {
         res.status(500).json({ error: 'Problem to get a note' });
+    }
+});
+
+router.get('/', withAuth, async (req, res) => {
+    try {
+        let notes = await Note.find({ author: req.user._id })
+        res.send(notes)
+    } catch (error) {
+        res.json({ error: error }).status(500)
     }
 });
 
