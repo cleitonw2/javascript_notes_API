@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Note = require('../models/note.js');
 const withAuth = require('../middlewares/auth');
-const { route } = require('./users.js');
 
 router.post('/', withAuth, async (req, res) => {
     const { title, body } = req.body;
@@ -35,6 +34,27 @@ router.get('/', withAuth, async (req, res) => {
         res.send(notes)
     } catch (error) {
         res.json({ error: error }).status(500)
+    }
+});
+
+router.put('/:id', withAuth, async (req, res) => {
+    const { title, body } = req.body;
+    const { id } = req.params;
+
+    try {
+        let note = await Note.findById(id);
+        if (isOwner(req.user, note)) {
+            note = await Note.findOneAndUpdate(
+                { _id: id },
+                { $set: { title: title, body: body } },
+                { upsert: true, 'new': true }
+            );
+
+            res.json(note);
+        } else
+            res.status(403).json({ error: 'Permission denied' });
+    } catch (error) {
+        res.status(500).json({ error: 'Problem to update a note' });
     }
 });
 
